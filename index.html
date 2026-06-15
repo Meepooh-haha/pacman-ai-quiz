@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pacman AI Quiz 🎮</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ── START SCREEN ── -->
+  <div id="start-screen" class="screen">
+    <h1>🎮 PACMAN</h1>
+    <h3>AI QUIZ EDITION</h3>
+    <p>
+      กินไอเทมพลัง ⚡ → ตอบคำถาม AI<br>
+      ตอบเร็ว = พลังนานขึ้น = กินผีได้นาน<br><br>
+      ควบคุม: ลูกศร หรือ WASD
+    </p>
+    <input id="name-input" type="text" maxlength="12" placeholder="ใส่ชื่อของคุณ" autocomplete="off">
+    <button id="btn-start" class="btn">▶ เริ่มเล่น</button>
+    <button id="btn-lb-start" class="btn btn-outline" onclick="document.getElementById('btn-leaderboard-home').click()">🏆 ดูอันดับ</button>
+  </div>
+
+  <!-- ── CANVAS ── -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- ── QUIZ OVERLAY ── -->
+  <div id="quiz-overlay">
+    <div id="quiz-box">
+      <div id="quiz-header">
+        <span id="quiz-label">⚡ คำถาม AI</span>
+        <span id="quiz-timer">15</span>
+      </div>
+      <div id="timer-bar-wrap">
+        <div id="timer-bar"></div>
+      </div>
+      <div id="quiz-question"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-result"></div>
+    </div>
+  </div>
+
+  <!-- ── GAME OVER SCREEN ── -->
+  <div id="gameover-screen" class="screen">
+    <h1>GAME OVER</h1>
+    <p>คะแนนของคุณ</p>
+    <div class="final-score" id="final-score">0</div>
+    <button id="btn-retry" class="btn">▶ เล่นอีกครั้ง</button>
+    <button id="btn-leaderboard" class="btn btn-outline">🏆 ดูอันดับ</button>
+  </div>
+
+  <!-- ── LEADERBOARD SCREEN ── -->
+  <div id="leaderboard-screen" class="screen">
+    <h2>🏆 TOP 3 — อันดับสูงสุด</h2>
+    <p style="font-size:9px;color:#555">3 อันดับแรกมีของรางวัล!</p>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>ชื่อ</th>
+          <th style="text-align:right">คะแนน</th>
+        </tr>
+      </thead>
+      <tbody id="lb-body">
+        <tr><td colspan="3" class="lb-empty">กำลังโหลด...</td></tr>
+      </tbody>
+    </table>
+    <button id="btn-lb-play" class="btn">▶ เล่นเลย</button>
+    <button id="btn-leaderboard-home" class="btn btn-outline" onclick="showScreen(document.getElementById('leaderboard-screen'));renderLeaderboard()">🔄 รีเฟรช</button>
+  </div>
+
+  <div id="controls-hint">↑ ↓ ← → หรือ WASD เพื่อเคลื่อนที่</div>
+</div>
+
+<!-- Firebase SDK (Compat v9) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- Your Firebase config — แก้ไขในไฟล์นี้ -->
+<script src="firebase-config.js"></script>
+
+<!-- Game -->
+<script src="game.js"></script>
+</body>
+</html>
