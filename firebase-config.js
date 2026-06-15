@@ -28,12 +28,13 @@
 // ============================================================
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyD3xg-Da8QnO_PVwan6j4Z6XvDFQTFYIqM",
+  authDomain: "pacman-ai-e0807.firebaseapp.com",
+  projectId: "pacman-ai-e0807",
+  storageBucket: "pacman-ai-e0807.firebasestorage.app",
+  messagingSenderId: "417534076988",
+  appId: "1:417534076988:web:a62ca61ca92b0cfee57b39",
+  measurementId: "G-X2BPTKEPWK"
 };
 
 // ไม่ต้องแก้ไขส่วนด้านล่างนี้
