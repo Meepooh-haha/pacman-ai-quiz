@@ -73,12 +73,55 @@ h3 { color: #00CFCF; font-size: 14px; }
 }
 .btn-outline:hover { background: #FFD70022; }
 
+/* ── LIVE SCORE ── */
+#live-score-bar {
+  font-size: 10px;
+  color: #888;
+  letter-spacing: 2px;
+  padding: 6px 0 2px;
+}
+#live-score-bar span {
+  font-size: 20px;
+  color: #FFD700;
+  text-shadow: 0 0 10px #FFD700;
+}
+
 /* ── CANVAS ── */
+#canvas-wrap {
+  transform-origin: top center;
+}
 #gameCanvas {
   display: block;
   border: 2px solid #00CFCF33;
   image-rendering: pixelated;
 }
+
+/* ── D-PAD ── */
+#dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+}
+.dpad-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.dpad-btn {
+  width: 54px;
+  height: 54px;
+  background: #222;
+  border: 2px solid #555;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 8px;
+  touch-action: none;
+  user-select: none;
+}
+.dpad-btn:active { background: #FFD70033; border-color: #FFD700; }
 
 /* ── QUIZ MODAL ── */
 #quiz-overlay {

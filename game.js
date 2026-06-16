@@ -74,6 +74,7 @@ let ghosts = [];
 
 // ── Quiz state ──
 let questions = [];
+let currentQuestionIndex = 0;
 let quizActive = false;
 let quizTimerInterval = null;
 let quizTimeLeft = 15;
@@ -95,6 +96,7 @@ const quizTimerEl    = document.getElementById('quiz-timer');
 const quizTimerBar   = document.getElementById('timer-bar');
 const quizResult     = document.getElementById('quiz-result');
 const nameInput      = document.getElementById('name-input');
+const liveScoreEl    = document.getElementById('live-score');
 
 // ================================================================
 //  INIT
@@ -106,12 +108,19 @@ async function loadQuestions() {
     questions = data.questions;
   } catch(e) {
     console.warn('Could not load questions.json:', e);
-    questions = [{
-      question: 'AI ย่อมาจากอะไร?',
-      choices: ['Artificial Intelligence','Automatic Input','Advanced Internet','Analog Interface'],
-      answer: 0
-    }];
+    questions = [{ question: 'AI ย่อมาจากอะไร?', choices: ['Artificial Intelligence','Automatic Input','Advanced Internet','Analog Interface'], answer: 0 }];
   }
+}
+
+async function seedQuestionsToFirestore(qs) {
+  try {
+    const batch = db.batch();
+    qs.forEach((q, i) => {
+      batch.set(db.collection('questions').doc(`q${String(i + 1).padStart(2, '0')}`), q);
+    });
+    await batch.commit();
+    console.log('Questions seeded to Firestore ✓');
+  } catch(e) { console.warn('Seed questions failed:', e); }
 }
 
 function initMap() {
@@ -150,6 +159,7 @@ function initGhosts() {
 
 function startGame() {
   score = 0; lives = 3; level = 1; frame = 0;
+  currentQuestionIndex = 0;
   initMap();
   initPacman();
   initGhosts();
@@ -224,7 +234,7 @@ function updatePacman() {
   const col = Math.round((pac.px - T/2) / T);
   const row = Math.round((pac.py - HUD_H - T/2) / T);
 
-  if (nearCenter(pac.px, pac.py, col, row, speed + 1)) {
+  if (nearCenter(pac.px, pac.py, col, row, speed - 1)) {
     // Snap to center
     const center = tileCenterPx(col, row);
     pac.px = center.x;
@@ -322,7 +332,7 @@ function updateEatenGhost(g) {
   const col = Math.round((g.px - T/2) / T);
   const row = Math.round((g.py - HUD_H - T/2) / T);
 
-  if (nearCenter(g.px, g.py, col, row, 3)) {
+  if (nearCenter(g.px, g.py, col, row, 2)) {
     const center = tileCenterPx(col, row);
     g.px = center.x; g.py = center.y;
     g.col = col; g.row = row;
@@ -362,7 +372,7 @@ function updateActiveGhost(g) {
   if (g.mode === 'exiting') {
     // Move to exit door then to above ghost house
     const exitCol = 10, exitRow = 9;
-    if (nearCenter(g.px, g.py, col, row, spd + 1)) {
+    if (nearCenter(g.px, g.py, col, row, spd * 0.9)) {
       const center = tileCenterPx(col, row);
       g.px = center.x; g.py = center.y;
       if (col === exitCol && row === exitRow) {
@@ -386,7 +396,7 @@ function updateActiveGhost(g) {
     return;
   }
 
-  if (nearCenter(g.px, g.py, col, row, spd + 1)) {
+  if (nearCenter(g.px, g.py, col, row, spd * 0.9)) {
     const center = tileCenterPx(col, row);
     g.px = center.x; g.py = center.y;
     g.col = col; g.row = row;
@@ -508,7 +518,8 @@ function triggerQuiz() {
   if (questions.length === 0) return;
   gameRunning = false;
 
-  const q = questions[Math.floor(Math.random() * questions.length)];
+  const q = questions[currentQuestionIndex];
+  currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
   showQuiz(q);
 }
 
@@ -612,24 +623,29 @@ function showFloatingScore(px, py, pts) {
 //  LEADERBOARD
 // ================================================================
 async function saveScore(name, pts) {
-  if (!window.db) return;
+  if (!window.SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
   try {
-    await db.collection('leaderboard').add({
-      name: name.toUpperCase().slice(0, 12),
-      score: pts,
-      date: new Date().toISOString()
+    await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ name: name.toUpperCase().slice(0, 12), score: pts }),
     });
   } catch(e) { console.warn('Save score failed:', e); }
 }
 
 async function fetchLeaderboard() {
-  if (!window.db) return [];
+  if (!window.SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') return [];
   try {
-    const snap = await db.collection('leaderboard')
-      .orderBy('score', 'desc')
-      .limit(3)
-      .get();
-    return snap.docs.map(d => d.data());
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/leaderboard?select=name,score&order=score.desc&limit=3`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    return await res.json();
   } catch(e) { console.warn('Fetch leaderboard failed:', e); return []; }
 }
 
@@ -677,6 +693,7 @@ function drawHUD() {
   ctx.fillText('SCORE', 12, 22);
   ctx.font = 'bold 18px "Courier New"';
   ctx.fillText(score.toLocaleString(), 12, 44);
+  liveScoreEl.textContent = score.toLocaleString();
 
   // Player name
   ctx.font = '10px "Courier New"';
@@ -973,10 +990,33 @@ async function renderLeaderboard() {
 }
 
 // ================================================================
+//  SCALE TO FIT SCREEN
+// ================================================================
+function scaleCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const scale = Math.min(1, (window.innerWidth - 16) / canvas.width);
+  wrap.style.transform = `scale(${scale})`;
+  wrap.style.marginBottom = scale < 1 ? `${(canvas.height * scale - canvas.height)}px` : '0';
+}
+window.addEventListener('resize', scaleCanvas);
+
+// ================================================================
+//  D-PAD INPUT
+// ================================================================
+const DPAD = { 'dpad-up':[0,-1], 'dpad-down':[0,1], 'dpad-left':[-1,0], 'dpad-right':[1,0] };
+Object.entries(DPAD).forEach(([id, [dx, dy]]) => {
+  const btn = document.getElementById(id);
+  const apply = e => { e.preventDefault(); pac.nextDx = dx; pac.nextDy = dy; };
+  btn.addEventListener('touchstart', apply, { passive: false });
+  btn.addEventListener('mousedown', apply);
+});
+
+// ================================================================
 //  BOOTSTRAP
 // ================================================================
 (async () => {
   await loadQuestions();
+  scaleCanvas();
   showScreen(startScreen);
 
   // Draw static maze on canvas while on start screen
