@@ -643,11 +643,21 @@ async function fetchLeaderboard() {
   if (typeof SUPABASE_URL === 'undefined' || SUPABASE_URL === 'YOUR_SUPABASE_URL') return [];
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/leaderboard?select=name,score&order=score.desc&limit=20`,
+      `${SUPABASE_URL}/rest/v1/leaderboard?select=name,score&order=score.desc&limit=1000`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
     const data = await res.json();
-    return Array.isArray(data) ? data : [];
+    if (!Array.isArray(data)) return [];
+    // Keep only highest score per name
+    const best = new Map();
+    for (const row of data) {
+      if (!best.has(row.name) || best.get(row.name) < row.score) {
+        best.set(row.name, row.score);
+      }
+    }
+    return Array.from(best, ([name, score]) => ({ name, score }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 100);
   } catch(e) { console.warn('Fetch leaderboard failed:', e); return []; }
 }
 

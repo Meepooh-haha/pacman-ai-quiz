@@ -238,6 +238,16 @@ h3 { color: #00CFCF; font-size: 14px; }
 /* ── LEADERBOARD ── */
 #leaderboard-screen { gap: 16px; }
 
+#lb-scroll {
+  max-height: 55vh;
+  overflow-y: auto;
+  border: 1px solid #222;
+  border-radius: 6px;
+}
+#lb-scroll::-webkit-scrollbar { width: 6px; }
+#lb-scroll::-webkit-scrollbar-track { background: #111; }
+#lb-scroll::-webkit-scrollbar-thumb { background: #FFD70066; border-radius: 3px; }
+
 .lb-table {
   border-collapse: collapse;
   width: 360px;

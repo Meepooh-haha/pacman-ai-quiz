@@ -72,20 +72,21 @@
 
   <!-- ── LEADERBOARD SCREEN ── -->
   <div id="leaderboard-screen" class="screen">
-    <h2>🏆 TOP 3 — อันดับสูงสุด</h2>
-    <p style="font-size:9px;color:#555">3 อันดับแรกมีของรางวัล!</p>
-    <table class="lb-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>ชื่อ</th>
-          <th style="text-align:right">คะแนน</th>
-        </tr>
-      </thead>
-      <tbody id="lb-body">
-        <tr><td colspan="3" class="lb-empty">กำลังโหลด...</td></tr>
-      </tbody>
-    </table>
+    <h2>🏆 TOP 100</h2>
+    <div id="lb-scroll">
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>ชื่อ</th>
+            <th style="text-align:right">คะแนน</th>
+          </tr>
+        </thead>
+        <tbody id="lb-body">
+          <tr><td colspan="3" class="lb-empty">กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
+    </div>
     <button id="btn-lb-play" class="btn">▶ เล่นเลย</button>
     <button id="btn-leaderboard-home" class="btn btn-outline" onclick="showScreen(document.getElementById('leaderboard-screen'));renderLeaderboard()">🔄 รีเฟรช</button>
   </div>
