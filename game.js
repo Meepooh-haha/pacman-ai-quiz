@@ -113,17 +113,6 @@ async function loadQuestions() {
   }
 }
 
-async function seedQuestionsToFirestore(qs) {
-  try {
-    const batch = db.batch();
-    qs.forEach((q, i) => {
-      batch.set(db.collection('questions').doc(`q${String(i + 1).padStart(2, '0')}`), q);
-    });
-    await batch.commit();
-    console.log('Questions seeded to Firestore ✓');
-  } catch(e) { console.warn('Seed questions failed:', e); }
-}
-
 function initMap() {
   map = BASE_MAP.map(row => [...row]);
   totalDots = 0;
