@@ -47,6 +47,7 @@ const ctx = canvas.getContext('2d');
 
 // ── Game state ──
 let map, totalDots, dotsEaten, score, lives, level, frame;
+let lastTimestamp = 0;
 let playerName = 'PLAYER';
 let highScores = [];
 let raf = null;
@@ -159,6 +160,7 @@ function initGhosts() {
 
 function startGame() {
   score = 0; lives = 3; level = 1; frame = 0;
+  lastTimestamp = 0;
   currentQuestionIndex = 0;
   initMap();
   initPacman();
@@ -215,9 +217,9 @@ function nearCenter(px, py, col, row, threshold) {
 // ================================================================
 //  PACMAN LOGIC
 // ================================================================
-function updatePacman() {
+function updatePacman(dt) {
   if (pac.dead) {
-    pac.deadTimer--;
+    pac.deadTimer -= dt;
     if (pac.deadTimer <= 0) {
       lives--;
       if (lives <= 0) { endGame(); return; }
@@ -227,14 +229,14 @@ function updatePacman() {
   }
 
   // Mouth animation
-  pac.mouthOpen += 0.05 * pac.mouthDir;
+  pac.mouthOpen += 0.05 * pac.mouthDir * dt;
   if (pac.mouthOpen > 0.25 || pac.mouthOpen < 0.02) pac.mouthDir *= -1;
 
   const speed = pac.speed;
   const col = Math.round((pac.px - T/2) / T);
   const row = Math.round((pac.py - HUD_H - T/2) / T);
 
-  if (nearCenter(pac.px, pac.py, col, row, speed - 1)) {
+  if (nearCenter(pac.px, pac.py, col, row, speed * dt + 1)) {
     // Snap to center
     const center = tileCenterPx(col, row);
     pac.px = center.x;
@@ -257,8 +259,8 @@ function updatePacman() {
     collectItem(col, row);
   }
 
-  pac.px += pac.dx * speed;
-  pac.py += pac.dy * speed;
+  pac.px += pac.dx * speed * dt;
+  pac.py += pac.dy * speed * dt;
 
   // Tunnel wrap
   if (pac.dx < 0 && pac.px < -T/2) pac.px = COLS * T + T/2;
@@ -298,26 +300,26 @@ function checkLevelComplete() {
 // ================================================================
 const DIRS = [{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}];
 
-function updateGhosts() {
+function updateGhosts(dt) {
   ghosts.forEach(g => {
     if (g.eaten) {
-      updateEatenGhost(g);
+      updateEatenGhost(g, dt);
     } else if (g.mode === 'house') {
-      updateHouseGhost(g);
+      updateHouseGhost(g, dt);
     } else {
-      updateActiveGhost(g);
+      updateActiveGhost(g, dt);
     }
   });
 }
 
-function updateHouseGhost(g) {
+function updateHouseGhost(g, dt) {
   // Bounce vertically inside ghost zone
-  g.py += g.dy * 1.0;
+  g.py += g.dy * 1.0 * dt;
   const row = Math.round((g.py - HUD_H - T/2) / T);
   if (row <= 10) g.dy = 1;
   if (row >= 11) g.dy = -1;
 
-  g.exitTimer--;
+  g.exitTimer -= dt;
   if (g.exitTimer <= 0) {
     g.mode = 'exiting';
     g.col = 10; g.row = 10;
@@ -326,13 +328,14 @@ function updateHouseGhost(g) {
   }
 }
 
-function updateEatenGhost(g) {
+function updateEatenGhost(g, dt) {
   // Rush back to ghost house
   const targetCol = 10, targetRow = 10;
+  const spd = 2.0;
   const col = Math.round((g.px - T/2) / T);
   const row = Math.round((g.py - HUD_H - T/2) / T);
 
-  if (nearCenter(g.px, g.py, col, row, 2)) {
+  if (nearCenter(g.px, g.py, col, row, spd * dt + 1)) {
     const center = tileCenterPx(col, row);
     g.px = center.x; g.py = center.y;
     g.col = col; g.row = row;
@@ -357,14 +360,13 @@ function updateEatenGhost(g) {
     if (best) { g.dx = best.dx; g.dy = best.dy; }
   }
 
-  const spd = 2.0;
-  g.px += g.dx * spd;
-  g.py += g.dy * spd;
+  g.px += g.dx * spd * dt;
+  g.py += g.dy * spd * dt;
   g.col = Math.round((g.px - T/2) / T);
   g.row = Math.round((g.py - HUD_H - T/2) / T);
 }
 
-function updateActiveGhost(g) {
+function updateActiveGhost(g, dt) {
   const spd = g.scared ? 0.8 : (g.mode === 'exiting' ? 1.3 : 1.3);
   const col = Math.round((g.px - T/2) / T);
   const row = Math.round((g.py - HUD_H - T/2) / T);
@@ -372,7 +374,7 @@ function updateActiveGhost(g) {
   if (g.mode === 'exiting') {
     // Move to exit door then to above ghost house
     const exitCol = 10, exitRow = 9;
-    if (nearCenter(g.px, g.py, col, row, spd * 0.9)) {
+    if (nearCenter(g.px, g.py, col, row, spd * dt + 1)) {
       const center = tileCenterPx(col, row);
       g.px = center.x; g.py = center.y;
       if (col === exitCol && row === exitRow) {
@@ -391,12 +393,12 @@ function updateActiveGhost(g) {
       }
       if (best) { g.dx = best.dx; g.dy = best.dy; }
     }
-    g.px += g.dx * spd;
-    g.py += g.dy * spd;
+    g.px += g.dx * spd * dt;
+    g.py += g.dy * spd * dt;
     return;
   }
 
-  if (nearCenter(g.px, g.py, col, row, spd * 0.9)) {
+  if (nearCenter(g.px, g.py, col, row, spd * dt + 1)) {
     const center = tileCenterPx(col, row);
     g.px = center.x; g.py = center.y;
     g.col = col; g.row = row;
@@ -444,8 +446,8 @@ function updateActiveGhost(g) {
     }
   }
 
-  g.px += g.dx * spd;
-  g.py += g.dy * spd;
+  g.px += g.dx * spd * dt;
+  g.py += g.dy * spd * dt;
   g.col = Math.round((g.px - T/2) / T);
   g.row = Math.round((g.py - HUD_H - T/2) / T);
 
@@ -662,7 +664,7 @@ async function fetchLeaderboard() {
     }
     return Array.from(best, ([name, score]) => ({ name, score }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 100);
+      .slice(0, 10);
   } catch(e) { console.warn('Fetch leaderboard failed:', e); return []; }
 }
 
@@ -690,13 +692,13 @@ const DOT_COLOR = '#FFD700';
 const POWER_COLOR = '#FFD700';
 const PAC_COLOR = '#FFD700';
 
-function draw() {
+function draw(dt) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawHUD();
   drawMaze();
   drawPacman();
   drawGhosts();
-  drawFloats();
+  drawFloats(dt);
 }
 
 function drawHUD() {
@@ -885,11 +887,11 @@ function drawGhostEyes(px, py, dx=0, dy=0) {
   ctx.fill();
 }
 
-function drawFloats() {
+function drawFloats(dt) {
   for (let i = floats.length - 1; i >= 0; i--) {
     const f = floats[i];
-    f.life--;
-    f.py -= 0.5;
+    f.life -= dt;
+    f.py -= 0.5 * dt;
     if (f.life <= 0) { floats.splice(i, 1); continue; }
     ctx.globalAlpha = f.life / 60;
     ctx.fillStyle = '#00FF88';
@@ -903,13 +905,15 @@ function drawFloats() {
 // ================================================================
 //  GAME LOOP
 // ================================================================
-function loop() {
+function loop(ts) {
   if (!gameRunning) return;
-  frame++;
-  updatePacman();
-  updateGhosts();
+  const dt = lastTimestamp ? Math.min((ts - lastTimestamp) / (1000 / 60), 3) : 1;
+  lastTimestamp = ts;
+  frame += dt;
+  updatePacman(dt);
+  updateGhosts(dt);
   checkCollisions();
-  draw();
+  draw(dt);
   raf = requestAnimationFrame(loop);
 }
 
