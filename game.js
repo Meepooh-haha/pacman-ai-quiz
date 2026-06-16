@@ -672,7 +672,8 @@ const WALL_COLOR = '#1a3a6b';
 const WALL_BORDER = '#3a7bd5';
 const DOT_COLOR = '#FFD700';
 const POWER_COLOR = '#FFD700';
-const PAC_COLOR = '#FFD700';
+const PAC_COLOR = '#2277FF';
+const LIVSHIELD_GLOW = '#44AAFF';
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -723,7 +724,7 @@ function drawHUD() {
     ctx.fillStyle = '#00CFCF';
     ctx.font = '8px "Courier New"';
     ctx.textAlign = 'center';
-    ctx.fillText('⚡ POWERED', canvas.width/2, 44);
+    ctx.fillText('💊 POWERED', canvas.width/2, 44);
   }
 }
 
@@ -747,12 +748,19 @@ function drawMaze() {
         ctx.fill();
       } else if (tile === POWER) {
         const pulse = 0.5 + 0.5 * Math.sin(frame * 0.12);
-        ctx.fillStyle = `rgba(255,215,0,${0.6 + 0.4 * pulse})`;
-        ctx.shadowColor = '#FFD700';
-        ctx.shadowBlur = 6 * pulse;
+        const cx = x + T/2, cy = y + T/2;
+        ctx.shadowColor = '#FFFFFF';
+        ctx.shadowBlur = 5 * pulse;
+        ctx.fillStyle = `rgba(255,255,255,${0.7 + 0.3 * pulse})`;
         ctx.beginPath();
-        ctx.arc(x + T/2, y + T/2, 5, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, 7, 4, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = `rgba(200,220,255,${0.4 + 0.3 * pulse})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 3);
+        ctx.lineTo(cx, cy + 3);
+        ctx.stroke();
         ctx.shadowBlur = 0;
       } else if (tile === GHOST_ZONE) {
         ctx.fillStyle = '#050510';
@@ -764,108 +772,134 @@ function drawMaze() {
 
 function drawPacman() {
   if (pac.dead && pac.deadTimer < 60) {
-    // Death animation
     const progress = 1 - pac.deadTimer / 60;
-    const startAngle = progress * Math.PI;
-    ctx.fillStyle = PAC_COLOR;
-    ctx.beginPath();
-    ctx.moveTo(pac.px, pac.py);
-    ctx.arc(pac.px, pac.py, T/2 - 2, startAngle, Math.PI * 2 - startAngle);
-    ctx.closePath();
-    ctx.fill();
+    ctx.globalAlpha = 1 - progress * 0.85;
+    drawLivShieldAt(pac.px, pac.py, pac.dx, pac.dy);
+    ctx.globalAlpha = 1;
     return;
   }
   if (pac.dead) return;
+  drawLivShieldAt(pac.px, pac.py, pac.dx, pac.dy);
+}
 
-  const angle = pac.mouthOpen * Math.PI;
+function drawLivShieldAt(cx, cy, dx, dy) {
+  const r = T/2 - 2;
   let rotation = 0;
-  if (pac.dx === 1) rotation = 0;
-  else if (pac.dx === -1) rotation = Math.PI;
-  else if (pac.dy === -1) rotation = -Math.PI/2;
-  else if (pac.dy === 1) rotation = Math.PI/2;
+  if (dx === 1) rotation = 0;
+  else if (dx === -1) rotation = Math.PI;
+  else if (dy === -1) rotation = -Math.PI / 2;
+  else if (dy === 1) rotation = Math.PI / 2;
 
   ctx.save();
-  ctx.translate(pac.px, pac.py);
+  ctx.translate(cx, cy);
   ctx.rotate(rotation);
+
+  ctx.shadowColor = LIVSHIELD_GLOW;
+  ctx.shadowBlur = 10;
   ctx.fillStyle = PAC_COLOR;
-  ctx.shadowColor = '#FFD700';
-  ctx.shadowBlur = 8;
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.arc(0, 0, T/2 - 2, angle, Math.PI * 2 - angle);
-  ctx.closePath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
   ctx.fill();
   ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#FFFFFF';
+  const arm = r * 0.52, thick = r * 0.22;
+  ctx.fillRect(-thick, -arm, thick * 2, arm * 2);
+  ctx.fillRect(-arm, -thick, arm * 2, thick * 2);
+
+  ctx.fillStyle = LIVSHIELD_GLOW;
+  ctx.beginPath();
+  ctx.arc(r * 0.38, 0, 2, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.restore();
 }
 
 function drawPacmanIcon(x, y, r) {
   ctx.fillStyle = PAC_COLOR;
+  ctx.shadowColor = LIVSHIELD_GLOW;
+  ctx.shadowBlur = 4;
   ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.arc(x, y, r, 0.3, Math.PI * 2 - 0.3);
-  ctx.closePath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#FFFFFF';
+  const arm = r * 0.52, thick = r * 0.22;
+  ctx.fillRect(x - thick, y - arm, thick * 2, arm * 2);
+  ctx.fillRect(x - arm, y - thick, arm * 2, thick * 2);
 }
+
+const GERM_SPIKES = { Blinky: 7, Pinky: 5, Inky: 8, Clyde: 6 };
 
 function drawGhosts() {
   ghosts.forEach(g => {
-    if (g.eaten) {
-      drawGhostEyes(g.px, g.py);
-      return;
-    }
-    const scared = g.scared;
-    const blinking = scared && powered; // could add blink near end
-    const color = scared ? '#1a1aff' : g.color;
-
-    const x = g.px - T/2 + 2, y = g.py - T/2 + 2;
-    const w = T - 4, h = T - 4;
-    const r2 = w / 2;
-
-    ctx.fillStyle = color;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 6;
-
-    // Body
-    ctx.beginPath();
-    ctx.arc(g.px, g.py - h/4, r2, Math.PI, 0);
-    ctx.lineTo(x + w, y + h);
-    // Wiggly bottom
-    const segs = 3;
-    const sw = w / segs;
-    for (let i = segs - 1; i >= 0; i--) {
-      const bx = x + i * sw + sw/2;
-      const bump = (i % 2 === 0) ? y + h - 3 : y + h + 3;
-      ctx.quadraticCurveTo(bx, bump, x + i * sw, y + h);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    if (!scared) {
-      drawGhostEyes(g.px, g.py, g.dx, g.dy);
-    } else {
-      // Scared face
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(g.px - 4, g.py - 2, 2, 0, Math.PI * 2);
-      ctx.arc(g.px + 4, g.py - 2, 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    if (g.eaten) { drawGermRemnant(g.px, g.py); return; }
+    drawGerm(g);
   });
 }
 
-function drawGhostEyes(px, py, dx=0, dy=0) {
-  const ex = dx * 2, ey = dy * 2;
-  ctx.fillStyle = '#fff';
+function drawGerm(g) {
+  const cx = g.px, cy = g.py;
+  const r = T/2 - 2;
+  const color = g.scared ? '#2233CC' : g.color;
+  const spikes = GERM_SPIKES[g.name] || 6;
+  const wobble = Math.sin(frame * 0.1 + g.exitDelay * 0.3) * 0.9;
+
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 8;
+
   ctx.beginPath();
-  ctx.ellipse(px - 4, py - 3, 3, 4, 0, 0, Math.PI * 2);
-  ctx.ellipse(px + 4, py - 3, 3, 4, 0, 0, Math.PI * 2);
+  for (let i = 0; i < spikes * 2; i++) {
+    const angle = (i / (spikes * 2)) * Math.PI * 2;
+    const rad = i % 2 === 0 ? r + wobble : r * 0.58;
+    const sx = cx + Math.cos(angle) * rad;
+    const sy = cy + Math.sin(angle) * rad;
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = '#00f';
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
   ctx.beginPath();
-  ctx.arc(px - 4 + ex, py - 3 + ey, 1.5, 0, Math.PI * 2);
-  ctx.arc(px + 4 + ex, py - 3 + ey, 1.5, 0, Math.PI * 2);
+  ctx.arc(cx, cy, r * 0.42, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (g.scared) {
+    ctx.fillStyle = 'rgba(180,180,255,0.85)';
+    ctx.beginPath();
+    ctx.arc(cx - 3, cy - 1, 2, 0, Math.PI * 2);
+    ctx.arc(cx + 3, cy - 1, 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(cx - 3.5, cy - 2, 2.5, 0, Math.PI * 2);
+    ctx.arc(cx + 3.5, cy - 2, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#111';
+    const ex = g.dx * 1.5, ey = g.dy * 1.5;
+    ctx.beginPath();
+    ctx.arc(cx - 3.5 + ex, cy - 2 + ey, 1.3, 0, Math.PI * 2);
+    ctx.arc(cx + 3.5 + ex, cy - 2 + ey, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawGermRemnant(px, py) {
+  ctx.fillStyle = '#6688dd';
+  ctx.shadowColor = '#6688dd';
+  ctx.shadowBlur = 4;
+  ctx.beginPath();
+  ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#aabbff';
+  ctx.beginPath();
+  ctx.arc(px - 3, py, 1.5, 0, Math.PI * 2);
+  ctx.arc(px + 3, py, 1.5, 0, Math.PI * 2);
   ctx.fill();
 }
 
