@@ -623,7 +623,7 @@ function showFloatingScore(px, py, pts) {
 //  LEADERBOARD
 // ================================================================
 async function saveScore(name, pts) {
-  if (!window.SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
+  if (!typeof SUPABASE_URL !== 'undefined' || SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
       method: 'POST',
@@ -639,7 +639,7 @@ async function saveScore(name, pts) {
 }
 
 async function fetchLeaderboard() {
-  if (!window.SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') return [];
+  if (!typeof SUPABASE_URL !== 'undefined' || SUPABASE_URL === 'YOUR_SUPABASE_URL') return [];
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/leaderboard?select=name,score&order=score.desc&limit=3`,
