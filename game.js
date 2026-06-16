@@ -325,7 +325,7 @@ function updateEatenGhost(g) {
   const col = Math.round((g.px - T/2) / T);
   const row = Math.round((g.py - HUD_H - T/2) / T);
 
-  if (nearCenter(g.px, g.py, col, row, 2)) {
+  if (nearCenter(g.px, g.py, col, row, 1.5)) {
     const center = tileCenterPx(col, row);
     g.px = center.x; g.py = center.y;
     g.col = col; g.row = row;
@@ -338,15 +338,19 @@ function updateEatenGhost(g) {
       return;
     }
 
-    // Move toward target
-    let best = null, bestDist = Infinity;
-    for (const d of DIRS) {
-      const nc = col + d.dx, nr = row + d.dy;
-      if (!isWalkableForGhost(nc, nr)) continue;
-      if (d.dx === -g.dx && d.dy === -g.dy && (g.dx || g.dy)) continue;
-      const dd = dist(nc, nr, targetCol, targetRow);
-      if (dd < bestDist) { bestDist = dd; best = d; }
-    }
+    // Move toward target (try without reversal first, then allow reversal as fallback)
+    const pickDir = (allowReverse) => {
+      let best = null, bestDist = Infinity;
+      for (const d of DIRS) {
+        const nc = col + d.dx, nr = row + d.dy;
+        if (!isWalkableForGhost(nc, nr)) continue;
+        if (!allowReverse && d.dx === -g.dx && d.dy === -g.dy && (g.dx || g.dy)) continue;
+        const dd = dist(nc, nr, targetCol, targetRow);
+        if (dd < bestDist) { bestDist = dd; best = d; }
+      }
+      return best;
+    };
+    const best = pickDir(false) || pickDir(true);
     if (best) { g.dx = best.dx; g.dy = best.dy; }
   }
 
@@ -400,11 +404,13 @@ function updateActiveGhost(g) {
 
     let targetCol, targetRow;
     if (g.scared) {
-      // Random target
-      const validDirs = DIRS.filter(d => {
+      let validDirs = DIRS.filter(d => {
         const nc = col + d.dx, nr = row + d.dy;
         return isWalkableForGhost(nc, nr) && !(d.dx === -g.dx && d.dy === -g.dy && (g.dx||g.dy));
       });
+      if (validDirs.length === 0) {
+        validDirs = DIRS.filter(d => isWalkableForGhost(col + d.dx, row + d.dy));
+      }
       if (validDirs.length > 0) {
         const d = validDirs[Math.floor(Math.random() * validDirs.length)];
         g.dx = d.dx; g.dy = d.dy;
@@ -425,14 +431,18 @@ function updateActiveGhost(g) {
         default:
           targetCol = pacCol; targetRow = pacRow;
       }
-      let best = null, bestDist = Infinity;
-      for (const d of DIRS) {
-        const nc = col + d.dx, nr = row + d.dy;
-        if (!isWalkableForGhost(nc, nr)) continue;
-        if (d.dx === -g.dx && d.dy === -g.dy && (g.dx || g.dy)) continue;
-        const dd = dist(nc, nr, targetCol, targetRow);
-        if (dd < bestDist) { bestDist = dd; best = d; }
-      }
+      const pickDir = (allowReverse) => {
+        let best = null, bestDist = Infinity;
+        for (const d of DIRS) {
+          const nc = col + d.dx, nr = row + d.dy;
+          if (!isWalkableForGhost(nc, nr)) continue;
+          if (!allowReverse && d.dx === -g.dx && d.dy === -g.dy && (g.dx || g.dy)) continue;
+          const dd = dist(nc, nr, targetCol, targetRow);
+          if (dd < bestDist) { bestDist = dd; best = d; }
+        }
+        return best;
+      };
+      const best = pickDir(false) || pickDir(true);
       if (best) { g.dx = best.dx; g.dy = best.dy; }
     }
   }
