@@ -225,7 +225,7 @@ function updatePacman(dt) {
   const col = Math.round((pac.px - T/2) / T);
   const row = Math.round((pac.py - HUD_H - T/2) / T);
 
-  if (nearCenter(pac.px, pac.py, col, row, speed * dt + 1)) {
+  if (nearCenter(pac.px, pac.py, col, row, speed * dt * 0.6)) {
     // Snap to center
     const center = tileCenterPx(col, row);
     pac.px = center.x;
@@ -324,7 +324,7 @@ function updateEatenGhost(g, dt) {
   const col = Math.round((g.px - T/2) / T);
   const row = Math.round((g.py - HUD_H - T/2) / T);
 
-  if (nearCenter(g.px, g.py, col, row, spd * dt + 1)) {
+  if (nearCenter(g.px, g.py, col, row, spd * dt * 0.6)) {
     const center = tileCenterPx(col, row);
     g.px = center.x; g.py = center.y;
     g.col = col; g.row = row;
@@ -363,7 +363,7 @@ function updateActiveGhost(g, dt) {
   if (g.mode === 'exiting') {
     // Move to exit door then to above ghost house
     const exitCol = 10, exitRow = 9;
-    if (nearCenter(g.px, g.py, col, row, spd * dt + 1)) {
+    if (nearCenter(g.px, g.py, col, row, spd * dt * 0.6)) {
       const center = tileCenterPx(col, row);
       g.px = center.x; g.py = center.y;
       if (col === exitCol && row === exitRow) {
@@ -387,7 +387,7 @@ function updateActiveGhost(g, dt) {
     return;
   }
 
-  if (nearCenter(g.px, g.py, col, row, spd * dt + 1)) {
+  if (nearCenter(g.px, g.py, col, row, spd * dt * 0.6)) {
     const center = tileCenterPx(col, row);
     g.px = center.x; g.py = center.y;
     g.col = col; g.row = row;
