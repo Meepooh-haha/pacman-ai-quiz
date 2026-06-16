@@ -625,7 +625,7 @@ function showFloatingScore(px, py, pts) {
 async function saveScore(name, pts) {
   if (typeof SUPABASE_URL === 'undefined' || SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
@@ -635,6 +635,7 @@ async function saveScore(name, pts) {
       },
       body: JSON.stringify({ name: name.toUpperCase().slice(0, 12), score: pts }),
     });
+    if (!res.ok) console.warn('Save score error:', res.status, await res.text());
   } catch(e) { console.warn('Save score failed:', e); }
 }
 
@@ -645,7 +646,8 @@ async function fetchLeaderboard() {
       `${SUPABASE_URL}/rest/v1/leaderboard?select=name,score&order=score.desc&limit=20`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
-    return await res.json();
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
   } catch(e) { console.warn('Fetch leaderboard failed:', e); return []; }
 }
 
