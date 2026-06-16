@@ -623,7 +623,7 @@ function showFloatingScore(px, py, pts) {
 //  LEADERBOARD
 // ================================================================
 async function saveScore(name, pts) {
-  if (!typeof SUPABASE_URL !== 'undefined' || SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
+  if (typeof SUPABASE_URL === 'undefined' || SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/leaderboard`, {
       method: 'POST',
@@ -639,10 +639,10 @@ async function saveScore(name, pts) {
 }
 
 async function fetchLeaderboard() {
-  if (!typeof SUPABASE_URL !== 'undefined' || SUPABASE_URL === 'YOUR_SUPABASE_URL') return [];
+  if (typeof SUPABASE_URL === 'undefined' || SUPABASE_URL === 'YOUR_SUPABASE_URL') return [];
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/leaderboard?select=name,score&order=score.desc&limit=3`,
+      `${SUPABASE_URL}/rest/v1/leaderboard?select=name,score&order=score.desc&limit=20`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
     return await res.json();
@@ -982,7 +982,7 @@ async function renderLeaderboard() {
   }
   tbody.innerHTML = scores.map((s, i) => `
     <tr>
-      <td class="lb-rank">${['🥇','🥈','🥉'][i]}</td>
+      <td class="lb-rank">${i + 1}</td>
       <td>${s.name}</td>
       <td style="text-align:right">${s.score.toLocaleString()}</td>
     </tr>
