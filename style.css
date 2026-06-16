@@ -141,8 +141,8 @@ h3 { color: #00CFCF; font-size: 14px; }
   background: #0a0a1a;
   border: 3px solid #00CFCF;
   border-radius: 12px;
-  padding: 30px;
-  max-width: 600px;
+  padding: 36px;
+  max-width: 700px;
   width: 100%;
   box-shadow: 0 0 40px #00CFCF44;
 }
@@ -186,11 +186,13 @@ h3 { color: #00CFCF; font-size: 14px; }
 #timer-bar.danger { background: linear-gradient(90deg, #FF4444, #FF8800); }
 
 #quiz-question {
-  font-size: 16px;
-  line-height: 2;
-  color: #fff;
-  margin-bottom: 24px;
+  font-size: 18px;
+  line-height: 1.8;
+  color: #FFD700;
+  margin-bottom: 28px;
   min-height: 52px;
+  text-align: center;
+  padding: 0 8px;
 }
 
 #quiz-choices {
@@ -204,8 +206,8 @@ h3 { color: #00CFCF; font-size: 14px; }
   border: 2px solid #333;
   color: #ccc;
   font-family: inherit;
-  font-size: 13px;
-  padding: 14px 12px;
+  font-size: 15px;
+  padding: 18px 16px;
   cursor: pointer;
   border-radius: 8px;
   text-align: left;

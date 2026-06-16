@@ -459,8 +459,13 @@ function updateActiveGhost(g) {
 // ================================================================
 function checkCollisions() {
   if (pac.dead) return;
+  const pacCol = Math.round((pac.px - T/2) / T);
+  const pacRow = Math.round((pac.py - HUD_H - T/2) / T);
   for (const g of ghosts) {
     if (g.eaten) continue;
+    const gCol = Math.round((g.px - T/2) / T);
+    const gRow = Math.round((g.py - HUD_H - T/2) / T);
+    if (pacCol !== gCol || pacRow !== gRow) continue;
     const dx = Math.abs(pac.px - g.px);
     const dy = Math.abs(pac.py - g.py);
     if (dx < T * 0.6 && dy < T * 0.6) {
