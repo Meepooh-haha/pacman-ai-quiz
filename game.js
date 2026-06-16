@@ -357,7 +357,7 @@ function updateEatenGhost(g) {
     if (best) { g.dx = best.dx; g.dy = best.dy; }
   }
 
-  const spd = 3.0;
+  const spd = 2.0;
   g.px += g.dx * spd;
   g.py += g.dy * spd;
   g.col = Math.round((g.px - T/2) / T);
@@ -365,7 +365,7 @@ function updateEatenGhost(g) {
 }
 
 function updateActiveGhost(g) {
-  const spd = g.scared ? 1.2 : (g.mode === 'exiting' ? 2.0 : 2.0);
+  const spd = g.scared ? 0.8 : (g.mode === 'exiting' ? 1.3 : 1.3);
   const col = Math.round((g.px - T/2) / T);
   const row = Math.round((g.py - HUD_H - T/2) / T);
 

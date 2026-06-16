@@ -186,7 +186,7 @@ h3 { color: #00CFCF; font-size: 14px; }
 #timer-bar.danger { background: linear-gradient(90deg, #FF4444, #FF8800); }
 
 #quiz-question {
-  font-size: 13px;
+  font-size: 16px;
   line-height: 2;
   color: #fff;
   margin-bottom: 24px;
@@ -204,7 +204,7 @@ h3 { color: #00CFCF; font-size: 14px; }
   border: 2px solid #333;
   color: #ccc;
   font-family: inherit;
-  font-size: 10px;
+  font-size: 13px;
   padding: 14px 12px;
   cursor: pointer;
   border-radius: 8px;
