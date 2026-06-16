@@ -68,9 +68,9 @@ const pac = {
 // ── Ghosts ──
 const GHOST_DEFS = [
   { name:'Blinky', color:'#FF0000', startCol:10, startRow:7,  exitDelay:0  },
-  { name:'Pinky',  color:'#FFB8FF', startCol:10, startRow:11, exitDelay:4  },
-  { name:'Inky',   color:'#00CFCF', startCol:9,  startRow:11, exitDelay:8  },
-  { name:'Clyde',  color:'#FFB852', startCol:11, startRow:11, exitDelay:12 },
+  { name:'Pinky',  color:'#FFB8FF', startCol:10, startRow:11, exitDelay:2  },
+  { name:'Inky',   color:'#00CFCF', startCol:9,  startRow:11, exitDelay:4  },
+  { name:'Clyde',  color:'#FFB852', startCol:11, startRow:11, exitDelay:6  },
 ];
 let ghosts = [];
 
@@ -179,6 +179,12 @@ function isWalkable(col, row) {
 function isWalkableForGhost(col, row) {
   const t = tileAt(col, row);
   return t !== WALL;
+}
+
+// Chase/scared ghosts cannot re-enter the ghost house
+function isWalkableForActiveGhost(col, row) {
+  const t = tileAt(col, row);
+  return t !== WALL && t !== GHOST_ZONE;
 }
 
 function dist(ac, ar, bc, br) {
@@ -332,7 +338,7 @@ function updateEatenGhost(g) {
     g.col = 10; g.row = 10;
     g.eaten = false; g.scared = false;
     g.mode = 'house';
-    g.exitTimer = 5 * 60;
+    g.exitTimer = 2 * 60;
     g.dx = 0; g.dy = 1;
   } else {
     g.px += (dx / d) * spd;
@@ -379,22 +385,26 @@ function updateActiveGhost(g) {
     g.px = center.x; g.py = center.y;
     g.col = col; g.row = row;
 
-    // Choose next direction
     const pacCol = Math.round((pac.px - T/2) / T);
     const pacRow = Math.round((pac.py - HUD_H - T/2) / T);
 
     let targetCol, targetRow;
     if (g.scared) {
+      // Flee: pick direction that maximizes distance from LivShield
       let validDirs = DIRS.filter(d => {
         const nc = col + d.dx, nr = row + d.dy;
-        return isWalkableForGhost(nc, nr) && !(d.dx === -g.dx && d.dy === -g.dy && (g.dx||g.dy));
+        return isWalkableForActiveGhost(nc, nr) && !(d.dx === -g.dx && d.dy === -g.dy && (g.dx||g.dy));
       });
       if (validDirs.length === 0) {
-        validDirs = DIRS.filter(d => isWalkableForGhost(col + d.dx, row + d.dy));
+        validDirs = DIRS.filter(d => isWalkableForActiveGhost(col + d.dx, row + d.dy));
       }
       if (validDirs.length > 0) {
-        const d = validDirs[Math.floor(Math.random() * validDirs.length)];
-        g.dx = d.dx; g.dy = d.dy;
+        let best = validDirs[0], bestDist = -1;
+        for (const d of validDirs) {
+          const dd = dist(col + d.dx, row + d.dy, pacCol, pacRow);
+          if (dd > bestDist) { bestDist = dd; best = d; }
+        }
+        g.dx = best.dx; g.dy = best.dy;
       }
     } else {
       switch(g.name) {
@@ -406,7 +416,7 @@ function updateActiveGhost(g) {
           if (dist(col, row, pacCol, pacRow) > 8) {
             targetCol = pacCol; targetRow = pacRow;
           } else {
-            targetCol = 1; targetRow = 24; // scatter corner
+            targetCol = 1; targetRow = 24;
           }
           break;
         default:
@@ -416,7 +426,7 @@ function updateActiveGhost(g) {
         let best = null, bestDist = Infinity;
         for (const d of DIRS) {
           const nc = col + d.dx, nr = row + d.dy;
-          if (!isWalkableForGhost(nc, nr)) continue;
+          if (!isWalkableForActiveGhost(nc, nr)) continue;
           if (!allowReverse && d.dx === -g.dx && d.dy === -g.dy && (g.dx || g.dy)) continue;
           const dd = dist(nc, nr, targetCol, targetRow);
           if (dd < bestDist) { bestDist = dd; best = d; }
