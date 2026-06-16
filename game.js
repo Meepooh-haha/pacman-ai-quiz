@@ -320,45 +320,26 @@ function updateHouseGhost(g) {
 }
 
 function updateEatenGhost(g) {
-  // Rush back to ghost house
-  const targetCol = 10, targetRow = 10;
-  const col = Math.round((g.px - T/2) / T);
-  const row = Math.round((g.py - HUD_H - T/2) / T);
-
-  if (nearCenter(g.px, g.py, col, row, 1.5)) {
-    const center = tileCenterPx(col, row);
-    g.px = center.x; g.py = center.y;
-    g.col = col; g.row = row;
-
-    if (col === targetCol && row === targetRow) {
-      g.eaten = false; g.scared = false;
-      g.mode = 'house';
-      g.exitTimer = 5 * 60;
-      g.dy = 1;
-      return;
-    }
-
-    // Move toward target (try without reversal first, then allow reversal as fallback)
-    const pickDir = (allowReverse) => {
-      let best = null, bestDist = Infinity;
-      for (const d of DIRS) {
-        const nc = col + d.dx, nr = row + d.dy;
-        if (!isWalkableForGhost(nc, nr)) continue;
-        if (!allowReverse && d.dx === -g.dx && d.dy === -g.dy && (g.dx || g.dy)) continue;
-        const dd = dist(nc, nr, targetCol, targetRow);
-        if (dd < bestDist) { bestDist = dd; best = d; }
-      }
-      return best;
-    };
-    const best = pickDir(false) || pickDir(true);
-    if (best) { g.dx = best.dx; g.dy = best.dy; }
+  // Eyes float directly toward ghost house (classic Pac-Man behavior — passes through walls)
+  const targetPx = 10 * T + T / 2;
+  const targetPy = 10 * T + T / 2 + HUD_H;
+  const spd = 3.0;
+  const dx = targetPx - g.px;
+  const dy = targetPy - g.py;
+  const d = Math.hypot(dx, dy);
+  if (d <= spd) {
+    g.px = targetPx; g.py = targetPy;
+    g.col = 10; g.row = 10;
+    g.eaten = false; g.scared = false;
+    g.mode = 'house';
+    g.exitTimer = 5 * 60;
+    g.dx = 0; g.dy = 1;
+  } else {
+    g.px += (dx / d) * spd;
+    g.py += (dy / d) * spd;
+    g.col = Math.round((g.px - T/2) / T);
+    g.row = Math.round((g.py - HUD_H - T/2) / T);
   }
-
-  const spd = 2.0;
-  g.px += g.dx * spd;
-  g.py += g.dy * spd;
-  g.col = Math.round((g.px - T/2) / T);
-  g.row = Math.round((g.py - HUD_H - T/2) / T);
 }
 
 function updateActiveGhost(g) {
