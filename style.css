@@ -37,7 +37,7 @@ h2 { color: #FFD700; font-size: 20px; margin-bottom: 10px; }
 h3 { color: #00CFCF; font-size: 14px; }
 
 /* ── NAME INPUT SCREEN ── */
-#start-screen p { color: #aaa; font-size: 10px; text-align: center; line-height: 2; }
+#start-screen p { color: #aaa; font-size: 20px; text-align: center; line-height: 1.6; max-width: 90vw; padding: 0 8px; }
 
 #name-input {
   background: #111;

@@ -963,6 +963,8 @@ const KEY_MAP = {
 };
 
 document.addEventListener('keydown', e => {
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   const d = KEY_MAP[e.key];
   if (d) { e.preventDefault(); pac.nextDx = d.dx; pac.nextDy = d.dy; }
 });
@@ -1046,11 +1048,22 @@ async function renderLeaderboard() {
 // ================================================================
 function scaleCanvas() {
   const wrap = document.getElementById('canvas-wrap');
-  const scale = Math.min(1, (window.innerWidth - 16) / canvas.width);
+  const dpad = document.getElementById('dpad');
+  const scoreBar = document.getElementById('live-score-bar');
+
+  const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const availableWidth = window.innerWidth - 16;
+  // Reserve space for the score bar and D-pad (which sit outside the scaled canvas), plus breathing room
+  const reservedHeight = scoreBar.offsetHeight + dpad.offsetHeight + 12 + 16;
+  const availableHeight = viewportHeight - reservedHeight;
+
+  const scale = Math.min(1, availableWidth / canvas.width, availableHeight / canvas.height);
   wrap.style.transform = `scale(${scale})`;
   wrap.style.marginBottom = scale < 1 ? `${(canvas.height * scale - canvas.height)}px` : '0';
 }
 window.addEventListener('resize', scaleCanvas);
+window.addEventListener('orientationchange', scaleCanvas);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', scaleCanvas);
 
 // ================================================================
 //  D-PAD INPUT
